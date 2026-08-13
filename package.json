@@ -1,0 +1,21 @@
+{
+  "name": "flashloan-arbitrage",
+  "version": "1.0.0",
+  "description": "Aave V3 flash loan arbitrage bot between two Uniswap V2-style DEXs",
+  "license": "MIT",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.js",
+    "arb": "hardhat run scripts/execute.js"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.0"
+  },
+  "dependencies": {
+    "@aave/core-v3": "^1.19.3",
+    "@openzeppelin/contracts": "^5.0.2",
+    "dotenv": "^16.4.5"
+  }
+}
