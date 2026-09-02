@@ -52,9 +52,13 @@ Run the bot once:
 npx hardhat run scripts/execute.js --network sepolia
 ```
 
-`scripts/execute.js` calls the contract's `quoteRoundTrip` view function in both directions,
-picks whichever is profitable (if either is), and only submits `executeArbitrage` when it finds
-one. For it to actually catch real opportunities you'd run it on a loop against a fast RPC — the
+`scripts/execute.js` quotes both directions off-chain, and if either is profitable it prints the
+opportunity — direction, amounts, expected profit — and **asks for confirmation before submitting
+anything on-chain**. Nothing gets sent until you type `y`. For unattended/cron use, set
+`AUTO_CONFIRM=true` in `.env` to skip the prompt and submit automatically once a trade clears your
+`SLIPPAGE_BPS` and profit floor.
+
+For it to actually catch real opportunities you'd run it on a loop against a fast RPC — the
 version here is a single-shot check, not a production keeper loop.
 
 ## Things you need to fix before this touches real money
