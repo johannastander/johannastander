@@ -52,11 +52,19 @@ Run the bot once:
 npx hardhat run scripts/execute.js --network sepolia
 ```
 
-`scripts/execute.js` quotes both directions off-chain, and if either is profitable it prints the
-opportunity — direction, amounts, expected profit — and **asks for confirmation before submitting
-anything on-chain**. Nothing gets sent until you type `y`. For unattended/cron use, set
-`AUTO_CONFIRM=true` in `.env` to skip the prompt and submit automatically once a trade clears your
-`SLIPPAGE_BPS` and profit floor.
+`scripts/execute.js` tests a range of loan sizes (multiples of `BORROW_AMOUNT`, configurable via
+`SIZE_MULTIPLIERS_BPS`) across both directions, picks whichever size/direction maximizes net
+profit after Aave's flash loan premium, and if it's profitable prints what it found — direction,
+size, expected profit, fee — and **asks for confirmation before submitting anything on-chain**.
+Nothing gets sent until you type `y`. For unattended/cron use, set `AUTO_CONFIRM=true` in `.env`
+to skip the prompt and submit automatically once a trade clears your `SLIPPAGE_BPS` and profit
+floor.
+
+There's no "right" loan size in general — it's bounded above by Aave's available liquidity for
+that asset and by DEX pool depth (bigger loans move the pool price against you on both legs, so
+profit peaks at some size and then falls, often turning negative). Gas is roughly flat regardless
+of size, so it doesn't change which size is optimal, but it does set a profit floor below which
+even the "best" size isn't worth submitting.
 
 For it to actually catch real opportunities you'd run it on a loop against a fast RPC — the
 version here is a single-shot check, not a production keeper loop.
