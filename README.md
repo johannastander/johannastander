@@ -52,19 +52,30 @@ Run the bot once:
 npx hardhat run scripts/execute.js --network sepolia
 ```
 
-`scripts/execute.js` tests a range of loan sizes (multiples of `BORROW_AMOUNT`, configurable via
-`SIZE_MULTIPLIERS_BPS`) across both directions, picks whichever size/direction maximizes net
-profit after Aave's flash loan premium, and if it's profitable prints what it found — direction,
-size, expected profit, fee — and **asks for confirmation before submitting anything on-chain**.
-Nothing gets sent until you type `y`. For unattended/cron use, set `AUTO_CONFIRM=true` in `.env`
-to skip the prompt and submit automatically once a trade clears your `SLIPPAGE_BPS` and profit
-floor.
+`scripts/execute.js` runs in two passes:
+
+1. **Scan**: quotes a range of loan sizes (multiples of `BORROW_AMOUNT`, configurable via
+   `SIZE_MULTIPLIERS_BPS`) across both directions and computes gross profit after Aave's flash
+   loan premium, for every combination.
+2. **Gas check**: takes the top few grossly-profitable candidates, runs a real
+   `estimateGas` against each, prices that gas cost in the *borrow token's* terms via
+   `NATIVE_WRAPPED_TOKEN` (so a USDC-denominated trade's profit is compared against gas paid in
+   ETH/MATIC/etc. correctly), and picks whichever candidate is still profitable net of that —
+   not just gross.
+
+If a real net-profitable trade survives both passes, it prints what it found — direction, size,
+flash loan fee, gas cost, net profit — and **asks for confirmation before submitting anything
+on-chain**. Nothing gets sent until you type `y`. For unattended/cron use, set `AUTO_CONFIRM=true`
+in `.env` to skip the prompt and submit automatically once a trade clears your `SLIPPAGE_BPS` and
+profit floor.
 
 There's no "right" loan size in general — it's bounded above by Aave's available liquidity for
 that asset and by DEX pool depth (bigger loans move the pool price against you on both legs, so
 profit peaks at some size and then falls, often turning negative). Gas is roughly flat regardless
 of size, so it doesn't change which size is optimal, but it does set a profit floor below which
-even the "best" size isn't worth submitting.
+even the "best" size isn't worth submitting — which is exactly why the gas check runs on the
+already-picked best candidates instead of every single one: gas doesn't discriminate between
+sizes, it just decides whether the winner is worth submitting at all.
 
 For it to actually catch real opportunities you'd run it on a loop against a fast RPC — the
 version here is a single-shot check, not a production keeper loop.
